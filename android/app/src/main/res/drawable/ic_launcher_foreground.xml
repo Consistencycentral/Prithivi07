@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#6366f1"
+        android:pathData="M0,0h108v108H0z" />
+
+    <!-- Gradient overlay -->
+    <path
+        android:fillColor="#4f46e5"
+        android:pathData="M0,54 L108,0 L108,108 L0,108z"
+        android:fillAlpha="0.3" />
+
+    <!-- Letter H stylized -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,30 L36,78 L42,78 L42,57 L66,57 L66,78 L72,78 L72,30 L66,30 L66,51 L42,51 L42,30 Z" />
+
+    <!-- Small arc accent -->
+    <path
+        android:fillColor="#a78bfa"
+        android:pathData="M42,72 Q54,82 66,72"
+        android:strokeWidth="2.5"
+        android:strokeColor="#a78bfa"
+        android:fillAlpha="0" />
+</vector>

@@ -1,9 +1,7 @@
 name: Build APK
 
 on:
-  # Trigger manually from GitHub website
   workflow_dispatch:
-  # Also trigger on push to main (optional — remove if you only want manual)
   push:
     branches: [main]
 
@@ -13,47 +11,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3. Install dependencies & build Next.js static export
       - name: Install dependencies
         run: npm ci
 
       - name: Build Next.js static site
         run: npm run build
 
-      # 4. Copy web build output into Android assets
       - name: Copy build to Android assets
         run: |
           rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -r out/* android/app/src/main/assets/www/
 
-      # 5. Set up Java (required for Gradle/Android build)
+      # Generate fallback PNG icons for pre-API 26 devices
+      - name: Generate launcher icon PNGs
+        run: |
+          # Create a simple indigo square with white H as fallback icon
+          for size_dir in "mipmap-mdpi:48" "mipmap-hdpi:72" "mipmap-xhdpi:96" "mipmap-xxhdpi:144" "mipmap-xxxhdpi:192"; do
+            dir="${size_dir%%:*}"
+            size="${size_dir##*:}"
+            target="android/app/src/main/res/$dir"
+            mkdir -p "$target"
+
+            # Generate icon: indigo background with white "H"
+            convert -size ${size}x${size} xc:'#6366f1' \
+              -fill white -gravity center -font DejaVu-Sans-Bold \
+              -pointsize $((size * 45 / 100)) \
+              -annotate 0 "H" \
+              "$target/ic_launcher.png"
+
+            # Round version (circle crop)
+            convert "$target/ic_launcher.png" \
+              \( +clone -threshold -1 -negate -fill white -draw "circle $((size/2)),$((size/2)) $((size/2)),0" \) \
+              -alpha off -compose copy_opacity -composite \
+              "$target/ic_launcher_round.png"
+          done
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 6. Set up Android SDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # 7. Make Gradle wrapper executable & build APK
       - name: Generate Gradle wrapper
         working-directory: android
-        run: |
-          gradle wrapper --gradle-version 8.4
+        run: gradle wrapper --gradle-version 8.4
 
       - name: Build debug APK
         working-directory: android
@@ -61,7 +75,6 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # 8. Upload APK as a downloadable artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
