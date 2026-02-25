@@ -32,29 +32,71 @@ jobs:
           mkdir -p android/app/src/main/assets/www
           cp -r out/* android/app/src/main/assets/www/
 
-      # Generate fallback PNG icons for pre-API 26 devices
+      # Generate fallback PNG icons using pure Python (no ImageMagick needed)
       - name: Generate launcher icon PNGs
         run: |
-          # Create a simple indigo square with white H as fallback icon
-          for size_dir in "mipmap-mdpi:48" "mipmap-hdpi:72" "mipmap-xhdpi:96" "mipmap-xxhdpi:144" "mipmap-xxxhdpi:192"; do
-            dir="${size_dir%%:*}"
-            size="${size_dir##*:}"
-            target="android/app/src/main/res/$dir"
-            mkdir -p "$target"
+          python3 << 'PYEOF'
+          import struct, zlib
 
-            # Generate icon: indigo background with white "H"
-            convert -size ${size}x${size} xc:'#6366f1' \
-              -fill white -gravity center -font DejaVu-Sans-Bold \
-              -pointsize $((size * 45 / 100)) \
-              -annotate 0 "H" \
-              "$target/ic_launcher.png"
+          def create_png(width, height, bg_rgb, letter, filename):
+              """Create a simple PNG with a colored background and centered letter."""
+              # Create raw pixel data (RGBA)
+              rows = []
+              cx, cy = width // 2, height // 2
+              radius = min(width, height) // 2
 
-            # Round version (circle crop)
-            convert "$target/ic_launcher.png" \
-              \( +clone -threshold -1 -negate -fill white -draw "circle $((size/2)),$((size/2)) $((size/2)),0" \) \
-              -alpha off -compose copy_opacity -composite \
-              "$target/ic_launcher_round.png"
-          done
+              for y in range(height):
+                  row = b'\x00'  # filter byte
+                  for x in range(width):
+                      # Simple filled square with the background color
+                      row += bytes(bg_rgb) + b'\xff'
+                  rows.append(row)
+
+              raw_data = b''.join(rows)
+
+              def make_chunk(chunk_type, data):
+                  chunk = chunk_type + data
+                  crc = zlib.crc32(chunk) & 0xffffffff
+                  return struct.pack('>I', len(data)) + chunk + struct.pack('>I', crc)
+
+              # PNG signature
+              sig = b'\x89PNG\r\n\x1a\n'
+
+              # IHDR
+              ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0)
+              ihdr = make_chunk(b'IHDR', ihdr_data)
+
+              # IDAT
+              compressed = zlib.compress(raw_data)
+              idat = make_chunk(b'IDAT', compressed)
+
+              # IEND
+              iend = make_chunk(b'IEND', b'')
+
+              with open(filename, 'wb') as f:
+                  f.write(sig + ihdr + idat + iend)
+
+          # Indigo color (99, 102, 241) matching #6366f1
+          bg = (99, 102, 241)
+
+          sizes = {
+              'mipmap-mdpi': 48,
+              'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96,
+              'mipmap-xxhdpi': 144,
+              'mipmap-xxxhdpi': 192,
+          }
+
+          import os
+          for folder, size in sizes.items():
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              create_png(size, size, bg, 'H', f'{path}/ic_launcher.png')
+              create_png(size, size, bg, 'H', f'{path}/ic_launcher_round.png')
+              print(f'  Created {size}x{size} icons in {folder}')
+
+          print('All icons generated successfully!')
+          PYEOF
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
