@@ -19,14 +19,11 @@ const PROFESSIONS = [
 ];
 
 export default function LoginPage() {
-    const [mode, setMode] = useState<'login' | 'signup'>('signup');
     const [name, setName] = useState('');
     const [profession, setProfession] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, signup, isAuthenticated, isSupabaseMode } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const router = useRouter();
 
     if (isAuthenticated) {
@@ -36,37 +33,19 @@ export default function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim()) {
+            setError('Please enter your name');
+            return;
+        }
+        if (!profession) {
+            setError('Please select your profession');
+            return;
+        }
         setError('');
         setLoading(true);
 
         try {
-            let result: { error?: string };
-
-            if (isSupabaseMode) {
-                if (mode === 'signup') {
-                    if (!email || !password) {
-                        setError('Email and password are required');
-                        setLoading(false);
-                        return;
-                    }
-                    if (password.length < 6) {
-                        setError('Password must be at least 6 characters');
-                        setLoading(false);
-                        return;
-                    }
-                    result = await signup(name.trim(), profession || 'Student', email, password);
-                } else {
-                    if (!email || !password) {
-                        setError('Email and password are required');
-                        setLoading(false);
-                        return;
-                    }
-                    result = await login(name.trim(), profession || 'Student', email, password);
-                }
-            } else {
-                result = await login(name.trim(), profession || 'Student');
-            }
+            const result = await login(name.trim(), profession);
 
             if (result.error) {
                 setError(result.error);
@@ -83,7 +62,7 @@ export default function LoginPage() {
 
     return (
         <div style={{
-            minHeight: '100vh',
+            minHeight: '100dvh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -150,31 +129,34 @@ export default function LoginPage() {
 
                 {/* Card */}
                 <div className="card" style={{ padding: 32 }}>
-                    {/* Tab Toggle */}
-                    <div className="tab-group" style={{ marginBottom: 28 }}>
-                        <button
-                            className={`tab-item ${mode === 'signup' ? 'active' : ''}`}
-                            onClick={() => setMode('signup')}
-                            style={{ flex: 1 }}
-                        >
-                            Get Started
-                        </button>
-                        <button
-                            className={`tab-item ${mode === 'login' ? 'active' : ''}`}
-                            onClick={() => setMode('login')}
-                            style={{ flex: 1 }}
-                        >
-                            Welcome Back
-                        </button>
+                    <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                        <h2 style={{
+                            fontSize: 20,
+                            fontWeight: 700,
+                            color: 'var(--text-primary)',
+                            marginBottom: 4,
+                        }}>
+                            Welcome 👋
+                        </h2>
+                        <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
+                            Enter your details to get started
+                        </p>
                     </div>
 
                     <form onSubmit={handleSubmit}>
                         {/* Name */}
-                        <div style={{ marginBottom: 16 }}>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                        <div style={{ marginBottom: 18 }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: 'var(--text-secondary)',
+                                marginBottom: 6,
+                            }}>
                                 Your Name
                             </label>
                             <input
+                                id="login-name"
                                 className="input"
                                 type="text"
                                 placeholder="Enter your name"
@@ -182,41 +164,36 @@ export default function LoginPage() {
                                 onChange={e => setName(e.target.value)}
                                 required
                                 autoFocus
+                                autoComplete="name"
+                                style={{ fontSize: 15 }}
                             />
                         </div>
 
-                        {/* Email */}
-                        <div style={{ marginBottom: 16 }}>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                                Email {isSupabaseMode && <span style={{ color: 'var(--danger)' }}>*</span>}
+                        {/* Profession Dropdown */}
+                        <div style={{ marginBottom: 24 }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: 'var(--text-secondary)',
+                                marginBottom: 6,
+                            }}>
+                                I am a...
                             </label>
-                            <input
+                            <select
+                                id="login-profession"
                                 className="input"
-                                type="email"
-                                placeholder="your@email.com"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                required={isSupabaseMode}
-                            />
+                                value={profession}
+                                onChange={e => setProfession(e.target.value)}
+                                required
+                                style={{ cursor: 'pointer', fontSize: 15 }}
+                            >
+                                <option value="">Select Profession</option>
+                                {PROFESSIONS.map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
                         </div>
-
-                        {/* Password (only shown when Supabase is configured) */}
-                        {isSupabaseMode && (
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                                    Password <span style={{ color: 'var(--danger)' }}>*</span>
-                                </label>
-                                <input
-                                    className="input"
-                                    type="password"
-                                    placeholder="Min. 6 characters"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    required
-                                    minLength={6}
-                                />
-                            </div>
-                        )}
 
                         {/* Error message */}
                         {error && (
@@ -233,55 +210,21 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        {/* Profession Dropdown */}
-                        {mode === 'signup' && (
-                            <div style={{ marginBottom: 24 }}>
-                                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                                    I am a...
-                                </label>
-                                <select
-                                    className="input"
-                                    value={profession}
-                                    onChange={e => setProfession(e.target.value)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <option value="">Select Profession</option>
-                                    {PROFESSIONS.map(p => (
-                                        <option key={p} value={p}>{p}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {/* Supabase mode indicator */}
-                        {!isSupabaseMode && (
-                            <div style={{
-                                padding: '8px 12px',
-                                borderRadius: 'var(--radius-sm)',
-                                background: 'var(--info-bg)',
-                                color: 'var(--info)',
-                                fontSize: 11,
-                                marginBottom: 16,
-                                border: '1px solid rgba(59,130,246,0.2)',
-                            }}>
-                                💡 Running in demo mode (localStorage). Connect Supabase for real auth.
-                            </div>
-                        )}
-
                         {/* Submit */}
                         <button
                             type="submit"
+                            id="login-submit"
                             className="btn-primary"
-                            disabled={loading || !name.trim()}
+                            disabled={loading || !name.trim() || !profession}
                             style={{
                                 width: '100%',
                                 padding: '14px 24px',
                                 fontSize: 15,
-                                opacity: loading || !name.trim() ? 0.6 : 1,
+                                opacity: loading || !name.trim() || !profession ? 0.6 : 1,
                             }}
                         >
                             {loading ? (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                                     <span style={{
                                         width: 16,
                                         height: 16,
@@ -292,38 +235,11 @@ export default function LoginPage() {
                                     }} />
                                     Setting up your workspace...
                                 </span>
-                            ) : mode === 'signup' ? (
-                                'Create Account →'
                             ) : (
-                                'Sign In →'
+                                'Get Started →'
                             )}
                         </button>
                     </form>
-
-                    {/* Social hint */}
-                    <div style={{
-                        marginTop: 20,
-                        textAlign: 'center',
-                        fontSize: 12,
-                        color: 'var(--text-tertiary)',
-                    }}>
-                        {mode === 'signup'
-                            ? 'Already have an account? '
-                            : "Don't have an account? "}
-                        <button
-                            onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--accent-primary)',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: 12,
-                            }}
-                        >
-                            {mode === 'signup' ? 'Sign In' : 'Get Started'}
-                        </button>
-                    </div>
                 </div>
 
                 {/* Features */}
@@ -355,10 +271,10 @@ export default function LoginPage() {
             </div>
 
             <style jsx>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 }

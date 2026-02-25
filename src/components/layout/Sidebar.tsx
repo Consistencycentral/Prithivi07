@@ -14,8 +14,6 @@ const NAV_ITEMS = [
     { href: '/monthly', label: 'Monthly Insights', icon: '📈', section: 'views' },
     { href: '/annual', label: 'Annual Overview', icon: '🗓️', section: 'views' },
     { href: '/calendar', label: 'Calendar', icon: '📅', section: 'tools' },
-    { href: '/tutorials', label: 'Tutorials', icon: '🎓', section: 'tools' },
-    { href: '/downloads', label: 'My Downloads', icon: '📥', section: 'tools' },
 ];
 
 export default function Sidebar() {

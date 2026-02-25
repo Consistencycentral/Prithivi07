@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- HabitArc dark theme -->
+    <style name="Theme.HabitArc" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0f172a</item>
+        <item name="android:navigationBarColor">#0f172a</item>
+        <item name="android:windowBackground">#0f172a</item>
+        <item name="android:colorPrimary">#6366f1</item>
+        <item name="android:colorPrimaryDark">#4f46e5</item>
+        <item name="android:colorAccent">#a78bfa</item>
+    </style>
+</resources>
