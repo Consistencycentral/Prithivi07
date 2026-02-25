@@ -26,76 +26,50 @@ jobs:
       - name: Build Next.js static site
         run: npm run build
 
+      # Copy directly to assets/ (NOT assets/www/)
+      # WebViewAssetLoader serves assets/ at the root path /
+      # So /_next/static/... maps to assets/_next/static/...
       - name: Copy build to Android assets
         run: |
-          rm -rf android/app/src/main/assets/www
-          mkdir -p android/app/src/main/assets/www
-          cp -r out/* android/app/src/main/assets/www/
+          rm -rf android/app/src/main/assets
+          mkdir -p android/app/src/main/assets
+          cp -r out/* android/app/src/main/assets/
 
-      # Generate fallback PNG icons using pure Python (no ImageMagick needed)
       - name: Generate launcher icon PNGs
         run: |
           python3 << 'PYEOF'
-          import struct, zlib
+          import struct, zlib, os
 
-          def create_png(width, height, bg_rgb, letter, filename):
-              """Create a simple PNG with a colored background and centered letter."""
-              # Create raw pixel data (RGBA)
+          def create_png(width, height, rgb, filename):
               rows = []
-              cx, cy = width // 2, height // 2
-              radius = min(width, height) // 2
-
               for y in range(height):
-                  row = b'\x00'  # filter byte
+                  row = b'\x00'
                   for x in range(width):
-                      # Simple filled square with the background color
-                      row += bytes(bg_rgb) + b'\xff'
+                      row += bytes(rgb) + b'\xff'
                   rows.append(row)
-
               raw_data = b''.join(rows)
 
-              def make_chunk(chunk_type, data):
-                  chunk = chunk_type + data
-                  crc = zlib.crc32(chunk) & 0xffffffff
-                  return struct.pack('>I', len(data)) + chunk + struct.pack('>I', crc)
+              def chunk(ctype, data):
+                  c = ctype + data
+                  crc = zlib.crc32(c) & 0xffffffff
+                  return struct.pack('>I', len(data)) + c + struct.pack('>I', crc)
 
-              # PNG signature
               sig = b'\x89PNG\r\n\x1a\n'
-
-              # IHDR
-              ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0)
-              ihdr = make_chunk(b'IHDR', ihdr_data)
-
-              # IDAT
-              compressed = zlib.compress(raw_data)
-              idat = make_chunk(b'IDAT', compressed)
-
-              # IEND
-              iend = make_chunk(b'IEND', b'')
+              ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0))
+              idat = chunk(b'IDAT', zlib.compress(raw_data))
+              iend = chunk(b'IEND', b'')
 
               with open(filename, 'wb') as f:
                   f.write(sig + ihdr + idat + iend)
 
-          # Indigo color (99, 102, 241) matching #6366f1
           bg = (99, 102, 241)
-
-          sizes = {
-              'mipmap-mdpi': 48,
-              'mipmap-hdpi': 72,
-              'mipmap-xhdpi': 96,
-              'mipmap-xxhdpi': 144,
-              'mipmap-xxxhdpi': 192,
-          }
-
-          import os
-          for folder, size in sizes.items():
+          for folder, size in {'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192}.items():
               path = f'android/app/src/main/res/{folder}'
               os.makedirs(path, exist_ok=True)
-              create_png(size, size, bg, 'H', f'{path}/ic_launcher.png')
-              create_png(size, size, bg, 'H', f'{path}/ic_launcher_round.png')
+              create_png(size, size, bg, f'{path}/ic_launcher.png')
+              create_png(size, size, bg, f'{path}/ic_launcher_round.png')
               print(f'  Created {size}x{size} icons in {folder}')
-
-          print('All icons generated successfully!')
+          print('Done!')
           PYEOF
 
       - name: Set up JDK 17

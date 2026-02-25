@@ -7,15 +7,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
 
@@ -23,16 +24,12 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
 
-    // ─── Change this to your deployed URL or keep "file:///android_asset/www/index.html" for offline ───
-    private static final String APP_URL = "file:///android_asset/www/index.html";
-    // For deployed version, use: "https://your-app.netlify.app"
-
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Fullscreen immersive mode with dark status bar
+        // Dark status & navigation bars
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         Window window = getWindow();
         window.setStatusBarColor(Color.parseColor("#0f172a"));
@@ -48,10 +45,18 @@ public class MainActivity extends Activity {
         progressBar = findViewById(R.id.progressBar);
         swipeRefresh = findViewById(R.id.swipeRefresh);
 
+        // ── WebViewAssetLoader ──
+        // Serves files from assets/ over a proper HTTPS domain
+        // so that absolute paths like /_next/static/... resolve correctly
+        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain("habitarc.app")
+                .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         // ── WebView Settings ──
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);          // Required for localStorage
+        settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
@@ -64,18 +69,27 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         settings.setDatabaseEnabled(true);
 
-        // User agent to identify as HabitArc mobile app
         String userAgent = settings.getUserAgentString();
         settings.setUserAgentString(userAgent + " HabitArcApp/1.0");
 
-        // ── Handle navigation inside WebView ──
+        // ── Handle navigation & asset loading ──
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                // Let WebViewAssetLoader handle all requests to our domain
+                WebResourceResponse response = assetLoader.shouldInterceptRequest(request.getUrl());
+                if (response != null) {
+                    return response;
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Keep all navigation inside the WebView
-                if (url.startsWith("file:///") || url.contains("habitarc") || url.contains("localhost")) {
-                    return false; // Let WebView handle it
+                // Keep navigation inside the WebView for our domain
+                if (url.contains("habitarc.app")) {
+                    return false;
                 }
                 return false;
             }
@@ -88,7 +102,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        // ── Progress bar for loading ──
+        // ── Progress bar ──
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
@@ -103,18 +117,19 @@ public class MainActivity extends Activity {
 
         // ── Pull to refresh ──
         swipeRefresh.setColorSchemeColors(
-            Color.parseColor("#6366f1"),
-            Color.parseColor("#a78bfa"),
-            Color.parseColor("#8b5cf6")
+                Color.parseColor("#6366f1"),
+                Color.parseColor("#a78bfa"),
+                Color.parseColor("#8b5cf6")
         );
         swipeRefresh.setProgressBackgroundColorSchemeColor(Color.parseColor("#1e293b"));
         swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
-        // Set background to match app theme
         webView.setBackgroundColor(Color.parseColor("#0f172a"));
 
-        // Load the app
-        webView.loadUrl(APP_URL);
+        // Load the app via the asset loader's HTTPS domain
+        // This serves assets/index.html as https://habitarc.app/index.html
+        // so all absolute paths like /_next/static/... resolve correctly
+        webView.loadUrl("https://habitarc.app/index.html");
     }
 
     @Override
