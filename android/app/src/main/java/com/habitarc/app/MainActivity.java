@@ -3,26 +3,30 @@ package com.habitarc.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
+
+    // ─── Your live Netlify URL ───
+    private static final String APP_URL = "https://habitarc-app.netlify.app/";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -45,14 +49,6 @@ public class MainActivity extends Activity {
         progressBar = findViewById(R.id.progressBar);
         swipeRefresh = findViewById(R.id.swipeRefresh);
 
-        // ── WebViewAssetLoader ──
-        // Serves files from assets/ over a proper HTTPS domain
-        // so that absolute paths like /_next/static/... resolve correctly
-        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .setDomain("habitarc.app")
-                .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
-
         // ── WebView Settings ──
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -69,28 +65,20 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         settings.setDatabaseEnabled(true);
 
+        // Custom user agent
         String userAgent = settings.getUserAgentString();
         settings.setUserAgentString(userAgent + " HabitArcApp/1.0");
 
-        // ── Handle navigation & asset loading ──
+        // ── WebView Client ──
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                // Let WebViewAssetLoader handle all requests to our domain
-                WebResourceResponse response = assetLoader.shouldInterceptRequest(request.getUrl());
-                if (response != null) {
-                    return response;
-                }
-                return super.shouldInterceptRequest(view, request);
-            }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Keep navigation inside the WebView for our domain
-                if (url.contains("habitarc.app")) {
+                // Keep all habitarc navigation inside the WebView
+                if (url.contains("habitarc") || url.contains("netlify.app")) {
                     return false;
                 }
+                // Open external links in the WebView too (or use Intent for external browser)
                 return false;
             }
 
@@ -99,6 +87,13 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                // Show error message if page fails to load
+                Toast.makeText(MainActivity.this, "Please check your internet connection", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -124,12 +119,27 @@ public class MainActivity extends Activity {
         swipeRefresh.setProgressBackgroundColorSchemeColor(Color.parseColor("#1e293b"));
         swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
+        // Set background to match app theme
         webView.setBackgroundColor(Color.parseColor("#0f172a"));
 
-        // Load the app via the asset loader's HTTPS domain
-        // This serves assets/index.html as https://habitarc.app/index.html
-        // so all absolute paths like /_next/static/... resolve correctly
-        webView.loadUrl("https://habitarc.app/index.html");
+        // Check internet and load
+        if (isNetworkAvailable()) {
+            webView.loadUrl(APP_URL);
+        } else {
+            Toast.makeText(this, "No internet connection. Please connect and try again.", Toast.LENGTH_LONG).show();
+            webView.loadData(
+                "<html><body style='background:#0f172a;color:#94a3b8;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center;'>" +
+                "<div><h2 style='color:#818cf8;'>No Internet</h2><p>Please connect to the internet and reopen the app.</p></div>" +
+                "</body></html>",
+                "text/html", "UTF-8"
+            );
+        }
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
     @Override
