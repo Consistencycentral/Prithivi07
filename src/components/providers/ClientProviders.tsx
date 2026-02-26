@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { HabitProvider } from '@/contexts/HabitContext';
 import AppLayout from '@/components/layout/AppLayout';
+import RegisterSW from '@/components/providers/RegisterSW';
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
     return (
@@ -16,6 +17,7 @@ export default function ClientProviders({ children }: { children: React.ReactNod
                     </AppLayout>
                 </HabitProvider>
             </AuthProvider>
+            <RegisterSW />
         </ThemeProvider>
     );
 }

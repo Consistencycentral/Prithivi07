@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="purple_200">#a78bfa</color>
-    <color name="purple_500">#8b5cf6</color>
-    <color name="purple_700">#6366f1</color>
-    <color name="dark_bg">#0f172a</color>
-    <color name="dark_card">#1e293b</color>
-    <color name="white">#FFFFFF</color>
-</resources>

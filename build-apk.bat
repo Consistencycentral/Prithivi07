@@ -1,11 +1,11 @@
 @echo off
 REM ============================================
-REM  HabitArc APK Build Script
+REM  HabitArc Capacitor APK Build Script
 REM ============================================
 
 echo.
 echo  ==============================
-echo   HabitArc APK Builder
+echo   HabitArc Capacitor Builder
 echo  ==============================
 echo.
 
@@ -16,16 +16,20 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/3] Copying build output to Android assets...
-if exist "android\app\src\main\assets" (
-    rmdir /s /q "android\app\src\main\assets"
+echo [2/3] Syncing web assets to Capacitor Android...
+call npx cap sync android
+if errorlevel 1 (
+    echo ERROR: Capacitor sync failed!
+    exit /b 1
 )
-mkdir "android\app\src\main\assets"
-xcopy /s /e /y "out\*" "android\app\src\main\assets\" >nul
 
 echo [3/3] Ready for APK build!
 echo.
-echo  Open android/ folder in Android Studio
-echo  or run: cd android ^& gradlew.bat assembleDebug
+echo  Options:
+echo    1. Open in Android Studio:  npx cap open android
+echo    2. Build via CLI:           cd android ^& gradlew.bat assembleDebug
+echo.
+echo  The debug APK will be at:
+echo    android\app\build\outputs\apk\debug\app-debug.apk
 echo.
 echo Done!

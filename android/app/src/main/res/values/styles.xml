@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- HabitArc dark theme -->
-    <style name="Theme.HabitArc" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">#0f172a</item>
-        <item name="android:navigationBarColor">#0f172a</item>
-        <item name="android:windowBackground">#0f172a</item>
-        <item name="android:colorPrimary">#6366f1</item>
-        <item name="android:colorPrimaryDark">#4f46e5</item>
-        <item name="android:colorAccent">#a78bfa</item>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+
+
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
     </style>
 </resources>

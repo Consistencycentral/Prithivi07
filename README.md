@@ -1,6 +1,6 @@
 # HabitArc 🎯
 
-A modern habit-tracking app built with [Next.js](https://nextjs.org), featuring rich dashboards, streak tracking, and visual analytics. Available as both a **web app** and an **Android APK**.
+A modern habit-tracking app built with [Next.js](https://nextjs.org), featuring rich dashboards, streak tracking, and visual analytics. Available as a **PWA**, **Web App**, and **Android APK** (via Capacitor).
 
 ## Getting Started
 
@@ -30,42 +30,40 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 | Animations | Framer Motion |
 | Charts | Recharts |
 | Icons | Lucide React |
-| Mobile | Android WebView Wrapper |
+| Mobile | Capacitor (Native Android/iOS shell) |
+| PWA | Service Worker + Web App Manifest |
 
-## Building the Android APK
+## Building the Android APK (Capacitor)
 
 ### Prerequisites
 
 - [Node.js 20+](https://nodejs.org)
-- [Android Studio](https://developer.android.com/studio) **or** [Android SDK Command Line Tools](https://developer.android.com/studio#command-tools)
+- [Android Studio](https://developer.android.com/studio) with Android SDK
 
-### Option A: Automated Build Script (Windows)
+### Quick Build
 
 ```bash
-# From the project root
-build-apk.bat
+# Build & sync in one command
+npm run cap:sync
+
+# Open in Android Studio to build APK
+npm run cap:open:android
 ```
 
-This script:
-1. Runs `npm run build` (static export to `out/`)
-2. Copies the build output to `android/app/src/main/assets/www/`
-3. Triggers Gradle build (if available)
-
-### Option B: Manual Steps
+### Manual Steps
 
 ```bash
 # 1. Build Next.js static site
 npm run build
 
-# 2. Copy output to Android assets
-xcopy /s /e /y out\* android\app\src\main\assets\www\
+# 2. Sync web assets to Capacitor Android project
+npx cap sync android
 
-# 3. Build APK via Android Studio
-#    Open android/ folder → Build → Build APK(s)
+# 3. Open in Android Studio → Build → Build APK(s)
+npx cap open android
 
-# OR via command line (requires Android SDK):
-cd android
-gradlew.bat assembleDebug
+# OR build via command line (requires Android SDK):
+cd android && gradlew.bat assembleDebug
 ```
 
 The debug APK will be at:
@@ -73,31 +71,33 @@ The debug APK will be at:
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### Using a Deployed URL Instead
+### Automated Build Script (Windows)
 
-To load from your deployed site instead of bundled assets, edit `MainActivity.java`:
-
-```java
-// Change this:
-private static final String APP_URL = "file:///android_asset/www/index.html";
-
-// To your deployed URL:
-private static final String APP_URL = "https://your-app.netlify.app";
+```bash
+build-apk.bat
 ```
+
+## PWA (Progressive Web App)
+
+The app is also installable as a PWA directly from the browser:
+
+1. Open the deployed site in Chrome/Edge
+2. Click the install icon in the address bar (or "Add to Home Screen" on mobile)
+3. The app installs locally with offline caching support
+
+The PWA uses a service worker (`public/sw.js`) for:
+- **Cache-first** loading of static assets (JS, CSS, images, fonts)
+- **Network-first** loading of API calls (Supabase)
+- **Offline fallback** to cached pages
 
 ## App Icon Setup
 
-Place your logo files in the Android `mipmap` resource folders:
+Generate all icon sizes from a source image:
 
-| Folder | Size | File |
-|--------|------|------|
-| `mipmap-mdpi` | 48×48 | `ic_launcher.png` |
-| `mipmap-hdpi` | 72×72 | `ic_launcher.png` |
-| `mipmap-xhdpi` | 96×96 | `ic_launcher.png` |
-| `mipmap-xxhdpi` | 144×144 | `ic_launcher.png` |
-| `mipmap-xxxhdpi` | 192×192 | `ic_launcher.png` |
-
-Path: `android/app/src/main/res/mipmap-*/ic_launcher.png`
+```bash
+# Place your 512x512+ icon at scripts/icon-source.png, then:
+npm run generate:icons
+```
 
 ## Deploy on Netlify
 

@@ -44,3 +44,16 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Capacitor Android build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+android/.idea/
+android/local.properties
+
+# Old WebView wrapper backup
+android-old-webview/
+
+# Icon generation source
+scripts/icon-source.png
