@@ -27,7 +27,7 @@ export default function LoginPage() {
     const router = useRouter();
 
     if (isAuthenticated) {
-        router.push('/dashboard');
+        router.push('/dashboard/');
         return null;
     }
 
@@ -53,7 +53,7 @@ export default function LoginPage() {
                 return;
             }
 
-            router.push('/dashboard');
+            router.push('/dashboard/');
         } catch {
             setError('An unexpected error occurred');
             setLoading(false);

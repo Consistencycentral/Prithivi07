@@ -11,14 +11,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!isAuthenticated && pathname !== '/login') {
-            router.push('/login');
-        }
-    }, [isAuthenticated, pathname, router]);
+    const isLoginPage = pathname === '/login' || pathname === '/login/';
 
-    // Login page has no sidebar
-    if (pathname === '/login') {
+    useEffect(() => {
+        if (!isAuthenticated && !isLoginPage) {
+            router.push('/login/');
+        }
+    }, [isAuthenticated, isLoginPage, router]);
+
+    // Login page has no sidebar - render children directly
+    if (isLoginPage) {
         return <>{children}</>;
     }
 
