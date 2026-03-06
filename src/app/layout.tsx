@@ -27,15 +27,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <!-- Google tag (gtag.js) -->
-          <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q0P0306DC7"></script>
+       <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-CG19KP0LWY"></script>
           <script>
             window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
+          function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-          gtag('config', 'G-CG19KP0LWY');
-              </script> ;
+      gtag('config', 'G-CG19KP0LWY');
+    </script> ;
             `,
           }}
         />
