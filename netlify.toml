@@ -4,3 +4,57 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Custom headers for proper caching and content types
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
+# Ensure trailing slash redirects match the static export structure
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard/"
+  status = 301
+
+[[redirects]]
+  from = "/login"
+  to = "/login/"
+  status = 301
+
+[[redirects]]
+  from = "/daily"
+  to = "/daily/"
+  status = 301
+
+[[redirects]]
+  from = "/weekly"
+  to = "/weekly/"
+  status = 301
+
+[[redirects]]
+  from = "/monthly"
+  to = "/monthly/"
+  status = 301
+
+[[redirects]]
+  from = "/annual"
+  to = "/annual/"
+  status = 301
+
+[[redirects]]
+  from = "/calendar"
+  to = "/calendar/"
+  status = 301

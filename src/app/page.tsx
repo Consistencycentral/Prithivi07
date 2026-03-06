@@ -16,5 +16,37 @@ export default function Home() {
     }
   }, [isAuthenticated, router]);
 
-  return null;
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg-primary, #0f172a)',
+      color: 'var(--text-primary, #f1f5f9)',
+      flexDirection: 'column',
+      gap: 16,
+    }}>
+      <div style={{
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        background: 'linear-gradient(135deg, #6366f1, #a78bfa)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 24,
+      }}>🎯</div>
+      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px' }}>HabitArc</div>
+      <div style={{
+        width: 24,
+        height: 24,
+        border: '3px solid rgba(99,102,241,0.3)',
+        borderTopColor: '#6366f1',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 }

@@ -1,7 +1,7 @@
-// HabitArc Service Worker v2.0
-const CACHE_NAME = 'habitarc-v2';
-const STATIC_CACHE = 'habitarc-static-v2';
-const DYNAMIC_CACHE = 'habitarc-dynamic-v2';
+// HabitArc Service Worker v3.0
+const CACHE_NAME = 'habitarc-v3';
+const STATIC_CACHE = 'habitarc-static-v3';
+const DYNAMIC_CACHE = 'habitarc-dynamic-v3';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
