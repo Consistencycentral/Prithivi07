@@ -27,16 +27,16 @@ export default function Home() {
       flexDirection: 'column',
       gap: 16,
     }}>
-      <div style={{
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        background: 'linear-gradient(135deg, #6366f1, #a78bfa)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 24,
-      }}>🎯</div>
+      <img
+        src="/h-logo.png"
+        alt="HabitArc Logo"
+        width={48}
+        height={48}
+        style={{
+          borderRadius: 12,
+          objectFit: 'cover',
+        }}
+      />
       <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px' }}>HabitArc</div>
       <div style={{
         width: 24,

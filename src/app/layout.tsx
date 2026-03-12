@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import ClientProviders from "@/components/providers/ClientProviders";
-import Script from "next/script"; // 1. Import the Next.js Script component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,26 +40,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        
-        {/* 2. Add Google Analytics using the Script component inside the body */}
+        {/* Google Analytics */}
         <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-CG19KP0LWY"
           strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=G-Q0P0306DC7`}
         />
-        <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-        >
+        <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-Q0P0306DC7', {
-              page_path: window.location.pathname,
-            });
+            gtag('config', 'G-CG19KP0LWY');
           `}
         </Script>
-
         <ClientProviders>
           {children}
         </ClientProviders>

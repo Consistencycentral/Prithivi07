@@ -106,7 +106,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stat Cards Row */}
-            <div style={{
+            <div id="onboarding-stats-section" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: 16,
