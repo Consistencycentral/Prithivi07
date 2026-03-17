@@ -1,7 +1,7 @@
-// HabitArc Service Worker v3.0
-const CACHE_NAME = 'habitarc-v3';
-const STATIC_CACHE = 'habitarc-static-v3';
-const DYNAMIC_CACHE = 'habitarc-dynamic-v3';
+// HabitArc Service Worker v4.0 — fixed GA interception
+const CACHE_NAME = 'habitarc-v4';
+const STATIC_CACHE = 'habitarc-static-v4';
+const DYNAMIC_CACHE = 'habitarc-dynamic-v4';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
@@ -51,6 +51,16 @@ self.addEventListener('fetch', (event) => {
 
     // Skip Chrome extension requests
     if (url.protocol === 'chrome-extension:') return;
+
+    // Skip Google Analytics & Tag Manager entirely — never cache these
+    if (
+        url.hostname.includes('googletagmanager.com') ||
+        url.hostname.includes('google-analytics.com') ||
+        url.hostname.includes('analytics.google.com') ||
+        url.hostname.includes('googleads.g.doubleclick.net')
+    ) {
+        return;
+    }
 
     // Network-first for Supabase API calls
     if (url.hostname.includes('supabase')) {
