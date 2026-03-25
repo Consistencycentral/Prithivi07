@@ -8,6 +8,8 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import AppLayout from '@/components/layout/AppLayout';
 import RegisterSW from '@/components/providers/RegisterSW';
 import OnboardingTour from '@/components/onboarding/OnboardingTour';
+// ✅ CHANGE 4: Google Analytics — SPA route tracker
+import RouteTracker from '@/components/providers/RouteTracker';
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
     return (
@@ -19,6 +21,8 @@ export default function ClientProviders({ children }: { children: React.ReactNod
                             {children}
                         </AppLayout>
                         <OnboardingTour />
+                        {/* ✅ CHANGE 4: fires page_view once per route change */}
+                        <RouteTracker />
                     </OnboardingProvider>
                 </HabitProvider>
             </AuthProvider>

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+// ✅ CHANGE 4: Google Analytics event tracking for tutorial
+import { trackTutorialStarted, trackTutorialCompleted } from '@/lib/analytics';
 
 interface OnboardingContextValue {
     /** Whether the tour is currently running */
@@ -17,7 +19,8 @@ interface OnboardingContextValue {
 
 const OnboardingContext = createContext<OnboardingContextValue>({} as OnboardingContextValue);
 
-const TOUR_STORAGE_KEY = 'habitarc-onboarding-completed';
+// ✅ CHANGE 3: Tutorial — localStorage flag key (also acts as tutorial_completed: true)
+const TOUR_STORAGE_KEY = 'tutorial_completed';
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
     const [tourActive, setTourActive] = useState(false);
@@ -30,23 +33,30 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         const isCompleted = completed === 'true';
         setHasCompletedTour(isCompleted);
 
-        // Auto-start tour for first-time users after a short delay
+        // ✅ CHANGE 3: Auto-start tour for first-time users only once
         if (!isCompleted) {
             const timer = setTimeout(() => {
                 setTourActive(true);
-            }, 1500); // Wait for dashboard to fully render
+                // ✅ CHANGE 4: GA — tutorial_started event
+                trackTutorialStarted();
+            }, 1500);
             return () => clearTimeout(timer);
         }
     }, []);
 
     const startTour = useCallback(() => {
         setTourActive(true);
+        // ✅ CHANGE 4: GA — tutorial_started event (manual replay)
+        trackTutorialStarted();
     }, []);
 
     const stopTour = useCallback(() => {
         setTourActive(false);
         setHasCompletedTour(true);
+        // ✅ CHANGE 3: Set tutorial_completed flag so it never shows again
         localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+        // ✅ CHANGE 4: GA — tutorial_completed event
+        trackTutorialCompleted();
     }, []);
 
     const resetTour = useCallback(() => {

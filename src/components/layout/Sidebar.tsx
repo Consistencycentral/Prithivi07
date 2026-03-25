@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useAuth } from '@/contexts/AuthContext';
-import { useHabits } from '@/contexts/HabitContext';
+import { useHabits, HABIT_CATEGORIES, getCategoryColor } from '@/contexts/HabitContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 
 const NAV_ITEMS = [
@@ -26,14 +26,35 @@ export default function Sidebar() {
     const { startTour, hasCompletedTour } = useOnboarding();
     const [newHabitName, setNewHabitName] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    // ✅ CHANGE 1: Category selector state for new habit creation
+    const [selectedCategory, setSelectedCategory] = useState<string>(HABIT_CATEGORIES[0]);
+    const [customCategory, setCustomCategory] = useState('');
+    const [showCustomInput, setShowCustomInput] = useState(false);
 
     const handleAddHabit = (e: React.FormEvent) => {
         e.preventDefault();
         if (newHabitName.trim()) {
             const emojis = ['⭐', '🎯', '💪', '🔥', '✨', '🚀', '💎', '🌟'];
             const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-            addHabit(newHabitName.trim(), 'General', randomEmoji);
+            // ✅ CHANGE 1: Use selected category (or custom) when creating habit
+            const category = showCustomInput && customCategory.trim()
+                ? customCategory.trim()
+                : selectedCategory;
+            addHabit(newHabitName.trim(), category, randomEmoji);
             setNewHabitName('');
+            setCustomCategory('');
+            setShowCustomInput(false);
+        }
+    };
+
+    // ✅ CHANGE 1: Handle category change — detect "Custom" selection
+    const handleCategoryChange = (value: string) => {
+        if (value === '__custom__') {
+            setShowCustomInput(true);
+            setSelectedCategory('General');
+        } else {
+            setShowCustomInput(false);
+            setSelectedCategory(value);
         }
     };
 
@@ -113,13 +134,13 @@ export default function Sidebar() {
                     </Link>
                 </div>
 
-                {/* Quick Add Habit */}
+                {/* ✅ CHANGE 1: Quick Add Habit with Category Selector */}
                 <div id="onboarding-add-habit" style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                     <form onSubmit={handleAddHabit}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
                             Quick Add Habit
                         </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                             <input
                                 type="text"
                                 value={newHabitName}
@@ -155,8 +176,68 @@ export default function Sidebar() {
                                 +
                             </button>
                         </div>
-                        <div style={{ fontSize: 11, color: '#475569', marginTop: 6 }}>
-                            {habits.length} habits tracked
+                        {/* ✅ CHANGE 1: Category dropdown */}
+                        <select
+                            value={showCustomInput ? '__custom__' : selectedCategory}
+                            onChange={e => handleCategoryChange(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '7px 10px',
+                                borderRadius: 8,
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(255,255,255,0.05)',
+                                color: '#e2e8f0',
+                                fontSize: 12,
+                                outline: 'none',
+                                cursor: 'pointer',
+                                marginBottom: showCustomInput ? 6 : 0,
+                            }}
+                        >
+                            {HABIT_CATEGORIES.map(cat => (
+                                <option key={cat} value={cat} style={{ background: '#1a1d2e', color: '#e2e8f0' }}>
+                                    {cat}
+                                </option>
+                            ))}
+                            <option value="__custom__" style={{ background: '#1a1d2e', color: '#e2e8f0' }}>
+                                ✏️ Custom...
+                            </option>
+                        </select>
+                        {/* ✅ CHANGE 1: Custom category input */}
+                        {showCustomInput && (
+                            <input
+                                type="text"
+                                value={customCategory}
+                                onChange={e => setCustomCategory(e.target.value)}
+                                placeholder="Custom category name..."
+                                style={{
+                                    width: '100%',
+                                    padding: '7px 10px',
+                                    borderRadius: 8,
+                                    border: '1px solid rgba(99,102,241,0.3)',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    color: '#e2e8f0',
+                                    fontSize: 12,
+                                    outline: 'none',
+                                }}
+                            />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                            <span
+                                style={{
+                                    display: 'inline-block',
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    background: getCategoryColor(
+                                        showCustomInput && customCategory.trim()
+                                            ? customCategory.trim()
+                                            : selectedCategory
+                                    ),
+                                }}
+                            />
+                            <span style={{ fontSize: 11, color: '#475569' }}>
+                                {habits.length} habits tracked
+                            </span>
                         </div>
                     </form>
                 </div>

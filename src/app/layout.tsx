@@ -37,15 +37,20 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-        {/* Google Analytics — standard gtag.js installation */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-CG19KP0LWY"></script>
+
+        {/* ✅ CHANGE 4: Google Analytics Fix — correct GA4 property, placed in <head>
+            before any other scripts. send_page_view: false prevents automatic
+            double-counting; pageviews are fired manually via trackPageView().
+            NOTE: Ad blockers may prevent this script from loading — that is
+            expected and cannot be fixed in code. */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-53VXQSTVM8"></script>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-CG19KP0LWY');
+              gtag('config', 'G-53VXQSTVM8', { send_page_view: false });
             `,
           }}
         />

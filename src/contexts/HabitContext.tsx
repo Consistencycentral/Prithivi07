@@ -1,6 +1,44 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+// ✅ CHANGE 4: Google Analytics event tracking
+import { trackHabitCreated, trackHabitChecked, trackHabitDeleted } from '@/lib/analytics';
+
+// ✅ CHANGE 1: Categories — default list of categories
+export const HABIT_CATEGORIES = [
+    'Health',
+    'Productivity',
+    'Fitness',
+    'Learning',
+    'Mindfulness',
+    'Finance',
+    'Social',
+    'General',
+] as const;
+
+// ✅ CHANGE 1: Category color mapping for badges/labels
+export const CATEGORY_COLORS: Record<string, string> = {
+    Health: '#10b981',
+    Productivity: '#6366f1',
+    Fitness: '#ef4444',
+    Learning: '#f59e0b',
+    Mindfulness: '#8b5cf6',
+    Finance: '#3b82f6',
+    Social: '#ec4899',
+    General: '#64748b',
+};
+
+/** Returns a color for any category — falls back to a hash-based color for custom categories */
+export function getCategoryColor(category: string): string {
+    if (CATEGORY_COLORS[category]) return CATEGORY_COLORS[category];
+    // Generate a stable color for custom categories
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+        hash = category.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 65%, 55%)`;
+}
 
 export interface Habit {
     id: string;
@@ -56,6 +94,8 @@ interface HabitContextValue {
     addMilestone: (milestone: Milestone) => void;
     removeMilestone: (date: string, title: string) => void;
     getLast30DaysTrend: () => { date: string; percentage: number }[];
+    // ✅ CHANGE 1: expose list of all unique categories in use
+    allCategories: string[];
 }
 
 const HabitContext = createContext<HabitContextValue>({} as HabitContextValue);
@@ -76,16 +116,24 @@ function generateDemoCompletions(): HabitCompletion {
     const today = new Date();
     const habitIds = DEFAULT_HABITS.map(h => h.id);
 
-    for (let i = 60; i >= 0; i--) {
+    // ✅ CHANGE 2: Checkbox Fix — generate demo data for past days only (NOT today)
+    // Today always starts unchecked so users begin fresh each day
+    for (let i = 60; i >= 1; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const dateKey = d.toISOString().split('T')[0];
         completions[dateKey] = {};
         habitIds.forEach(hId => {
-            // Randomize demo data with weighted probability towards completion
             completions[dateKey][hId] = Math.random() > (0.25 + (i * 0.003));
         });
     }
+    // Today starts completely unchecked
+    const todayKey = today.toISOString().split('T')[0];
+    completions[todayKey] = {};
+    habitIds.forEach(hId => {
+        completions[todayKey][hId] = false;
+    });
+
     return completions;
 }
 
@@ -107,7 +155,17 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
 
         if (storedHabits) {
             setHabits(JSON.parse(storedHabits));
-            setCompletions(storedCompletions ? JSON.parse(storedCompletions) : {});
+
+            // ✅ CHANGE 2: Checkbox Fix — ensure today's completions default to unchecked
+            // We load stored completions but verify today's entries exist with proper date keys.
+            // If no entry exists for today, all habits start unchecked.
+            const parsed: HabitCompletion = storedCompletions ? JSON.parse(storedCompletions) : {};
+            const todayKey = new Date().toISOString().split('T')[0];
+            if (!parsed[todayKey]) {
+                parsed[todayKey] = {};
+                // All habits unchecked for today by default — no stale carry-over
+            }
+            setCompletions(parsed);
         } else {
             // First visit: set demo data
             setHabits(DEFAULT_HABITS);
@@ -137,25 +195,36 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
         const updated = [...habits, newHabit];
         setHabits(updated);
         persist('habitarc-habits', updated);
+        // ✅ CHANGE 4: GA event tracking
+        trackHabitCreated(name);
     };
 
     const removeHabit = (id: string) => {
+        const habitName = habits.find(h => h.id === id)?.name || id;
         const updated = habits.filter(h => h.id !== id);
         setHabits(updated);
         persist('habitarc-habits', updated);
+        // ✅ CHANGE 4: GA event tracking
+        trackHabitDeleted(habitName);
     };
 
     const toggleCompletion = (dateKey: string, habitId: string) => {
         setCompletions(prev => {
             const dayData = prev[dateKey] || {};
+            const newState = !dayData[habitId];
             const updated = {
                 ...prev,
                 [dateKey]: {
                     ...dayData,
-                    [habitId]: !dayData[habitId],
+                    [habitId]: newState,
                 },
             };
             persist('habitarc-completions', updated);
+            // ✅ CHANGE 4: GA event — only track when checking (not unchecking)
+            if (newState) {
+                const habitName = habits.find(h => h.id === habitId)?.name || habitId;
+                trackHabitChecked(habitName);
+            }
             return updated;
         });
     };
@@ -286,6 +355,13 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
         return result;
     };
 
+    // ✅ CHANGE 1: Compute all unique categories from habits + defaults
+    const allCategories = React.useMemo(() => {
+        const cats = new Set<string>(HABIT_CATEGORIES as unknown as string[]);
+        habits.forEach(h => cats.add(h.category));
+        return Array.from(cats);
+    }, [habits]);
+
     if (!mounted) return null;
 
     return (
@@ -311,6 +387,7 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
                 addMilestone,
                 removeMilestone,
                 getLast30DaysTrend,
+                allCategories,
             }}
         >
             {children}
